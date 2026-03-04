@@ -1,0 +1,295 @@
+---
+title: Update list
+description: Automatically select the highest priority Java version across all alternatives
+---
+
+The **Update List** command switches all Java alternatives to automatic mode, allowing the system to select the highest priority version for `java`, `javac`, and `jar`.
+
+## When to use this command
+
+Use this command when you:
+- Want to let the system automatically choose the best Java version
+- Have manually selected a version and want to return to automatic mode
+- Just installed a new Java version with higher priority and want it to become active
+- Need to reset your Java configuration to system defaults
+- Want to ensure all Java binaries use the highest priority version
+
+## How it works
+
+This command uses `update-alternatives --auto` to switch from manual mode to automatic mode. In auto mode, the system always uses the alternative with the highest priority number.
+
+## Automatic vs manual mode
+
+<CardGroup cols={2}>
+  <Card title="Manual mode" icon="hand">
+    - Set when you use [Change Version](/commands/change-version)
+    - System uses your explicitly selected version
+    - Persists even if higher priority versions are installed
+    - Remains until you change it or run Update List
+  </Card>
+  <Card title="Automatic mode" icon="wand-magic-sparkles">
+    - Set when you use Update List
+    - System uses the highest priority version
+    - Automatically updates when new versions are installed
+    - Recommended for most users
+  </Card>
+</CardGroup>
+
+## Step-by-step usage
+
+<Steps>
+  <Step title="Select the command">
+    From the main menu, choose **"Update List"**
+  </Step>
+
+  <Step title="Automatic update process">
+    The tool switches all three Java binaries to auto mode:
+    
+    ```bash
+    Updating system alternatives
+    ```
+    
+    This happens automatically with sudo privileges.
+  </Step>
+
+  <Step title="Completion">
+    After about 1 second, the screen clears and returns to the main menu. Your Java alternatives are now in auto mode.
+  </Step>
+
+  <Step title="Verify the change">
+    Check which version is now active:
+    
+    ```bash
+    $ java -version
+    java version "21.0.1" 2023-10-17 LTS
+    Java(TM) SE Runtime Environment (build 21.0.1+12-LTS-29)
+    Java HotSpot(TM) 64-Bit Server VM (build 21.0.1+12-LTS-29, mixed mode, sharing)
+    
+    $ update-alternatives --display java
+    java - auto mode
+      link best version is /opt/java/jdk-21/bin/java
+    ```
+  </Step>
+</Steps>
+
+## What happens behind the scenes
+
+The implementation in `internal/commands/updatelistjava.go:11-35` executes three `update-alternatives --auto` commands:
+
+```go
+err := u.RunCommandInteractive("sudo", "update-alternatives", "--auto", "java")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--auto", "javac")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--auto", "jar")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+```
+
+Each command:
+1. Switches the alternative from manual to auto mode
+2. Evaluates all registered alternatives
+3. Selects the one with the highest priority
+4. Updates the symbolic link in `/usr/bin/` to point to the highest priority version
+
+## Priority-based selection
+
+The system selects the Java version based on priority numbers assigned during installation:
+
+| Priority | Typical Java Version |
+|----------|---------------------|
+| 800      | Java 8              |
+| 1100     | Java 11             |
+| 1700     | Java 17             |
+| 2100     | Java 21             |
+
+<Note>
+Higher numbers = higher priority. If you have Java 11 (priority 1100), Java 17 (priority 1700), and Java 21 (priority 2100) installed, auto mode will select Java 21.
+</Note>
+
+## Real terminal example
+
+### Before running Update List (manual mode)
+
+```bash
+$ update-alternatives --display java
+java - manual mode
+  link currently points to /opt/java/jdk-11/bin/java
+/opt/java/jdk-11/bin/java - priority 1100
+/opt/java/jdk-17/bin/java - priority 1700
+/opt/java/jdk-21/bin/java - priority 2100
+
+$ java -version
+java version "11.0.21"
+```
+
+### Running Update List
+
+```bash
+$ javaoptionscli
+# Select "Update List" from menu
+
+Updating system alternatives
+
+# Returns to main menu after 1 second
+```
+
+### After running Update List (auto mode)
+
+```bash
+$ update-alternatives --display java
+java - auto mode
+  link best version is /opt/java/jdk-21/bin/java
+  link currently points to /opt/java/jdk-21/bin/java
+/opt/java/jdk-11/bin/java - priority 1100
+/opt/java/jdk-17/bin/java - priority 1700
+/opt/java/jdk-21/bin/java - priority 2100
+
+$ java -version
+java version "21.0.1"
+```
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="After installing a new Java version">
+    Automatically switch to the newly installed version:
+    ```bash
+    # Install new Java version
+    $ javaoptionscli  # New Version Java -> jdk-21.tar.gz (priority 2100)
+    
+    # Activate it automatically
+    $ javaoptionscli  # Update List
+    
+    # Verify
+    $ java -version  # Now shows Java 21
+    ```
+  </Accordion>
+
+  <Accordion title="Resetting after temporary version change">
+    Return to the highest priority version after testing:
+    ```bash
+    # Temporarily switch to Java 11 for testing
+    $ javaoptionscli  # Change Version -> Java 11
+    $ ./run-legacy-tests.sh
+    
+    # Reset to auto mode (Java 21)
+    $ javaoptionscli  # Update List
+    $ java -version  # Back to Java 21
+    ```
+  </Accordion>
+
+  <Accordion title="System-wide default configuration">
+    Set up a machine with sensible defaults:
+    ```bash
+    # Install multiple versions
+    $ javaoptionscli  # New Version Java -> jdk-17 (priority 1700)
+    $ javaoptionscli  # New Version Java -> jdk-21 (priority 2100)
+    
+    # Set to auto mode for automatic selection
+    $ javaoptionscli  # Update List
+    
+    # System will always use Java 21 unless manually changed
+    ```
+  </Accordion>
+
+  <Accordion title="Troubleshooting inconsistent versions">
+    If your java, javac, and jar are using different versions:
+    ```bash
+    $ which java  # Points to Java 21
+    $ which javac  # Points to Java 17
+    $ which jar  # Points to Java 11
+    
+    # Fix by resetting to auto mode
+    $ javaoptionscli  # Update List
+    
+    # All three now point to Java 21
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## When NOT to use this command
+
+<Warning>
+**Project-specific version requirements**
+
+Don't use Update List if your current project requires a specific Java version that's not the highest priority. Instead:
+- Use [Change Version](/commands/change-version) to maintain your required version
+- Or adjust priorities during installation so your required version has the highest priority
+</Warning>
+
+## Behavior with priority ties
+
+If two versions have the same priority (rare but possible):
+
+```bash
+/opt/java/jdk-17-oracle/bin/java - priority 1700
+/opt/java/jdk-17-openjdk/bin/java - priority 1700
+```
+
+The system will choose the one that was registered first. To control this:
+- Delete and reinstall with different priorities
+- Or use [Change Version](/commands/change-version) to manually select your preferred version
+
+## Checking current mode
+
+To see if you're in auto or manual mode:
+
+```bash
+$ update-alternatives --display java
+java - auto mode  # or "manual mode"
+  link best version is /opt/java/jdk-21/bin/java
+  link currently points to /opt/java/jdk-21/bin/java
+...
+```
+
+Or for a quick check:
+
+```bash
+$ update-alternatives --query java | grep -i mode
+Status: auto
+```
+
+## Comparison with other commands
+
+| Command | Mode After | Version Selection |
+|---------|------------|-------------------|
+| New Version Java | Unchanged | No change to active version |
+| Change Version | Manual | Your selection |
+| Update List | Auto | Highest priority |
+| Delete Version | Unchanged | Auto-adjusts if deleted version was active |
+
+<Note>
+**Best practice**: Use auto mode (Update List) for general development unless you have a specific reason to pin a version. This ensures you're always using the most recent Java version you've installed.
+</Note>
+
+## Troubleshooting
+
+**Update List doesn't change my active version**
+- Check priorities: `update-alternatives --display java`
+- The version you expect may not have the highest priority
+- Use [Change Version](/commands/change-version) instead
+
+**JAVA_HOME still points to old version**
+- `update-alternatives` doesn't modify `JAVA_HOME`
+- Update manually: `export JAVA_HOME=/opt/java/jdk-21`
+- Add to `~/.bashrc` for persistence
+
+**Error: update-alternatives: error: no alternatives for java**
+- No Java versions are registered
+- Install Java using [New Version Java](/commands/new-version)
+
+**Changes don't persist after reboot**
+- Auto mode persists across reboots
+- If reverting, check startup scripts that might set Java version
+- Look for JAVA_HOME exports in `~/.bashrc`, `~/.profile`, etc.

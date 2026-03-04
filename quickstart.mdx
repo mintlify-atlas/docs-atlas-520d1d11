@@ -1,80 +1,280 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with JavaOptionsCli by installing and managing your first Java version
 ---
 
-## Get started in three steps
+This guide will walk you through the complete workflow of using JavaOptionsCli to install and manage Java versions on your system.
 
-Get your documentation site running locally and make your first customization.
+## Prerequisites
 
-### Step 1: Set up your local environment
+Before you begin, make sure you have:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+- JavaOptionsCli installed and accessible from your terminal (see [Installation](/installation))
+- sudo privileges on your system
+- A Java JDK `.tar.gz` file downloaded
 
-### Step 2: Deploy your changes
+<Note>
+You can download Java JDK distributions from [Oracle](https://www.oracle.com/java/technologies/downloads/), [Adoptium](https://adoptium.net/), or [Amazon Corretto](https://aws.amazon.com/corretto/).
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+## Complete workflow
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Steps>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+<Step title="Place the tar.gz file in a directory">
 
-### Step 3: Go live
+Download a Java JDK `.tar.gz` file and place it in a directory. For this example, we'll use Java 21:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+```bash
+cd ~/Downloads
+wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz
+```
+
+<Warning>
+You **must** run JavaOptionsCli from the same directory where the `.tar.gz` file is located.
+</Warning>
+
+Verify the file is present:
+
+```bash
+ls -lh *.tar.gz
+```
+
+Example output:
+```
+-rw-r--r-- 1 user user 185M Mar  4 10:30 jdk-21_linux-x64_bin.tar.gz
+```
+
+</Step>
+
+<Step title="Run JavaOptionsCli">
+
+Launch JavaOptionsCli from the same directory:
+
+```bash
+JavaOptionsCli
+```
+
+You'll see the interactive menu:
+
+```
+╔════════════════════════════════════╗
+║                                    ║
+║                                    ║
+║          JavaOptionsCli            ║
+║                                    ║
+║                                    ║
+╚════════════════════════════════════╝
+
+  New Version Java
+  Changes Version
+  View List Versions
+  Delete Version
+  Update List
+  Exit
+```
+
+</Step>
+
+<Step title="Install a new Java version">
+
+Select **"New Version Java"** from the menu and follow the prompts:
+
+### 1. Enter the tar file name
+
+```
+Enter the name of the tar file
+jdk-21_linux-x64_bin.tar.gz
+```
+
+JavaOptionsCli will extract the archive and move it to `/opt/java/`.
+
+### 2. Choose the Java folder
+
+The tool will list the extracted folder:
+
+```
+Here are your Java versions and their folders
+jdk-21
+
+ℹ Ej. jdk-21
+Enter the folder for the new Java version
+jdk-21
+```
+
+### 3. Set the priority version
+
+```
+ℹ Ej. Java 21 === 2100
+Enter the Java version
+2100
+```
+
+<Note>
+The priority number determines which version is selected by default when multiple versions are available. Higher numbers have higher priority. A common convention is to use the version number multiplied by 100 (e.g., Java 21 = 2100, Java 17 = 1700).
+</Note>
+
+JavaOptionsCli will register the Java version with `update-alternatives`:
+
+```bash
+sudo update-alternatives --install /usr/bin/java java /opt/java/jdk-21/bin/java 2100
+sudo update-alternatives --install /usr/bin/javac javac /opt/java/jdk-21/bin/javac 2100
+sudo update-alternatives --install /usr/bin/jar jar /opt/java/jdk-21/bin/jar 2100
+```
+
+You'll see:
+```
+Java installed
+```
+
+</Step>
+
+<Step title="Verify the installation">
+
+Back at the main menu, select **"View List Versions"** to see all installed Java versions:
+
+```
+ℹ Showing versions
+ℹ Showing Java versions
+/opt/java/jdk-21/bin/java
+
+ℹ Showing javac versions
+/opt/java/jdk-21/bin/javac
+
+ℹ Showing jar versions
+/opt/java/jdk-21/bin/jar
+```
+
+Verify Java is working correctly in your terminal:
+
+```bash
+java -version
+```
+
+Example output:
+```
+java version "21.0.2" 2024-01-16 LTS
+Java(TM) SE Runtime Environment (build 21.0.2+13-LTS-58)
+Java HotSpot(TM) 64-Bit Server VM (build 21.0.2+13-LTS-58, mixed mode, sharing)
+```
+
+</Step>
+
+</Steps>
+
+## Switching Java versions
+
+If you have multiple Java versions installed, you can easily switch between them:
+
+<Steps>
+
+<Step title="Open the changes version menu">
+
+From the main menu, select **"Changes Version"**.
+
+</Step>
+
+<Step title="Select the Java version">
+
+You'll see the `update-alternatives` configuration menu for `java`, `javac`, and `jar`:
+
+```
+There are 2 choices for the alternative java (providing /usr/bin/java).
+
+  Selection    Path                          Priority   Status
+------------------------------------------------------------
+* 0            /opt/java/jdk-21/bin/java      2100      auto mode
+  1            /opt/java/jdk-17/bin/java      1700      manual mode
+  2            /opt/java/jdk-21/bin/java      2100      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number:
+```
+
+Enter the selection number for your desired Java version and press Enter.
+
+</Step>
+
+<Step title="Verify the switch">
+
+After selecting the version for all three tools (java, javac, jar), verify the change:
+
+```bash
+java -version
+```
+
+</Step>
+
+</Steps>
+
+## Common workflows
+
+### Installing multiple Java versions
+
+```bash
+# Install Java 17
+cd ~/Downloads
+wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
+JavaOptionsCli
+# Select "New Version Java" and follow prompts with priority 1700
+
+# Install Java 21
+wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.tar.gz
+JavaOptionsCli
+# Select "New Version Java" and follow prompts with priority 2100
+```
+
+### Listing all installed versions
+
+```bash
+JavaOptionsCli
+# Select "View List Versions"
+```
+
+Or use `update-alternatives` directly:
+
+```bash
+update-alternatives --list java
+```
+
+### Removing a Java version
+
+```bash
+JavaOptionsCli
+# Select "Delete Version" and follow the prompts
+```
+
+<Warning>
+The "Delete Version" feature will remove the Java installation from `/opt/java/` and unregister it from `update-alternatives`.
+</Warning>
+
+## Troubleshooting
+
+### "Error: permission denied"
+
+JavaOptionsCli requires sudo privileges for certain operations. Make sure you have the necessary permissions:
+
+```bash
+sudo JavaOptionsCli
+```
+
+### "not found" error when extracting
+
+Ensure you're running JavaOptionsCli from the same directory as your `.tar.gz` file:
+
+```bash
+cd /path/to/tar/file
+JavaOptionsCli
+```
+
+### Java version not changing
+
+If the Java version doesn't change after using "Changes Version", make sure you selected the version for all three tools: `java`, `javac`, and `jar`.
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you've successfully installed and managed Java versions with JavaOptionsCli, you can:
 
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+- Install additional Java versions for different projects
+- Switch between versions as needed for compatibility
+- Use the "Update List" option to refresh the alternatives list
+- Explore the "Delete Version" feature to remove unused installations

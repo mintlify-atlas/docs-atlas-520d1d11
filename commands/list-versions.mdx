@@ -1,0 +1,232 @@
+---
+title: List versions
+description: Display all registered Java versions in your system
+---
+
+The **View List Versions** command displays all Java versions registered with the system's alternatives system, showing the complete paths to each installation.
+
+## When to use this command
+
+Use this command when you:
+- Want to see what Java versions are available on your system
+- Need to verify a Java version was installed correctly
+- Are checking which versions are registered before deleting one
+- Want to know the exact paths to your Java installations
+- Need to audit your system's Java configurations
+
+## How it works
+
+This command uses `update-alternatives --list` to query all registered alternatives for the three Java binaries: `java`, `javac`, and `jar`.
+
+## Step-by-step usage
+
+<Steps>
+  <Step title="Select the command">
+    From the main menu, choose **"View List Versions"**
+  </Step>
+
+  <Step title="View Java runtime versions">
+    The tool displays all registered java alternatives:
+    
+    ```bash
+    Showing versions
+    
+    Showing Java versions
+    /opt/java/jdk-11/bin/java
+    /opt/java/jdk-17/bin/java
+    /opt/java/jdk-21/bin/java
+    ```
+  </Step>
+
+  <Step title="View javac compiler versions">
+    Next, it shows all javac alternatives:
+    
+    ```bash
+    Showing javac versions
+    /opt/java/jdk-11/bin/javac
+    /opt/java/jdk-17/bin/javac
+    /opt/java/jdk-21/bin/javac
+    ```
+  </Step>
+
+  <Step title="View jar tool versions">
+    Finally, it displays jar alternatives:
+    
+    ```bash
+    Showing jar versions
+    /opt/java/jdk-11/bin/jar
+    /opt/java/jdk-17/bin/jar
+    /opt/java/jdk-21/bin/jar
+    
+    Press Enter to continue...
+    ```
+  </Step>
+
+  <Step title="Return to menu">
+    Press Enter to return to the main menu.
+  </Step>
+</Steps>
+
+## What happens behind the scenes
+
+The implementation in `internal/commands/listjavaversion.go:10-42` executes three `update-alternatives --list` commands:
+
+```go
+color.Info.Prompt("Showing Java versions")
+err := u.RunCommandInteractive("update-alternatives", "--list", "java")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+fmt.Print("\n")
+
+color.Info.Prompt("Showing javac versions")
+err = u.RunCommandInteractive("update-alternatives", "--list", "javac")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+color.Info.Prompt("Showing jar versions")
+err = u.RunCommandInteractive("update-alternatives", "--list", "jar")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+```
+
+Each command queries the alternatives database and returns the full paths to all registered versions of that binary.
+
+## Real terminal example
+
+```bash
+$ javaoptionscli
+# Select "View List Versions" from menu
+
+Showing versions
+
+Showing Java versions
+/opt/java/jdk-11/bin/java
+/opt/java/jdk-17/bin/java
+/opt/java/jdk-21/bin/java
+
+
+Showing javac versions
+/opt/java/jdk-11/bin/javac
+/opt/java/jdk-17/bin/javac
+/opt/java/jdk-21/bin/javac
+Showing jar versions
+/opt/java/jdk-11/bin/jar
+/opt/java/jdk-17/bin/jar
+/opt/java/jdk-21/bin/jar
+
+Press Enter to continue...
+```
+
+## Understanding the output
+
+### Path structure
+
+Each path follows this pattern:
+```
+/opt/java/[folder-name]/bin/[binary]
+```
+
+<ParamField path="/opt/java" type="directory">
+  The standard installation directory for all Java versions managed by JavaOptionsCli
+</ParamField>
+
+<ParamField path="[folder-name]" type="directory">
+  The specific Java version directory (e.g., `jdk-11`, `jdk-17`, `jdk-21-oracle`)
+</ParamField>
+
+<ParamField path="bin/[binary]" type="executable">
+  The actual Java binary (`java`, `javac`, or `jar`)
+</ParamField>
+
+### What if versions don't match?
+
+Ideally, all three lists should show the same set of Java versions. If they don't match:
+
+<Warning>
+If you see different versions listed for `java`, `javac`, and `jar`, it indicates an incomplete installation. This can happen if:
+- A previous installation was interrupted
+- A version was manually removed from the alternatives system
+- Files were deleted from `/opt/java/` without unregistering
+
+Use the [Delete Version](/commands/delete-version) command to clean up inconsistent entries.
+</Warning>
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="Audit before installing a new version">
+    Before installing a new Java version, check what's already installed:
+    ```bash
+    $ javaoptionscli
+    # Select "View List Versions"
+    # Review the list
+    # If version already exists, no need to reinstall
+    ```
+  </Accordion>
+
+  <Accordion title="Verify installation success">
+    After installing a new Java version, confirm it was registered:
+    ```bash
+    $ javaoptionscli
+    # Select "New Version Java" and complete installation
+    # Return to menu and select "View List Versions"
+    # Verify new version appears in all three lists
+    ```
+  </Accordion>
+
+  <Accordion title="Document your environment">
+    Save the list for documentation or troubleshooting:
+    ```bash
+    $ update-alternatives --list java > installed-java-versions.txt
+    $ update-alternatives --list javac >> installed-java-versions.txt
+    $ update-alternatives --list jar >> installed-java-versions.txt
+    ```
+  </Accordion>
+
+  <Accordion title="Compare with file system">
+    Cross-reference registered versions with actual directories:
+    ```bash
+    $ javaoptionscli  # View List Versions
+    $ ls -la /opt/java/
+    # Check if directories match registered versions
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Difference from Change Version command
+
+While both commands show Java versions, they serve different purposes:
+
+| List Versions | Change Version |
+|---------------|----------------|
+| Shows only paths | Shows paths, priorities, and status |
+| Read-only operation | Allows switching versions |
+| No sudo required | Requires sudo privileges |
+| Quick reference | Interactive configuration |
+
+<Note>
+Use **List Versions** for a quick check of what's installed. Use [Change Version](/commands/change-version) when you need to see priorities and actually switch versions.
+</Note>
+
+## Troubleshooting
+
+**Empty list displayed**
+- No Java versions are registered in the alternatives system
+- Install Java using the [New Version Java](/commands/new-version) command
+
+**Error: update-alternatives: command not found**
+- Your system doesn't have the `update-alternatives` tool
+- This typically indicates a non-Debian/Ubuntu system
+- JavaOptionsCli is designed for Debian-based Linux distributions
+
+**Versions listed but java -version shows different version**
+- Your `JAVA_HOME` environment variable may be set to a different installation
+- Check with: `echo $JAVA_HOME`
+- Use [Change Version](/commands/change-version) to update system-wide defaults

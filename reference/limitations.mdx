@@ -1,0 +1,169 @@
+---
+title: Limitations
+description: Current limitations of JavaOptionsCli and planned future improvements
+---
+
+## Current limitations
+
+### Debian-based systems only
+
+JavaOptionsCli has only been tested on Debian-based Linux distributions (Ubuntu, Debian, Linux Mint, etc.).
+
+**Why**: The tool relies heavily on the `update-alternatives` system, which is specific to Debian-based distributions.
+
+**Impact**: Users on other Linux distributions (Fedora, Arch, openSUSE) cannot use this tool without modifications.
+
+```bash
+# Required for JavaOptionsCli
+sudo update-alternatives --install ...
+sudo update-alternatives --config ...
+```
+
+### Requires update-alternatives
+
+The tool assumes that `update-alternatives` is available on the system.
+
+**What it's used for**:
+- Registering Java installations
+- Switching between Java versions
+- Managing system-wide Java, javac, and jar binaries
+
+If `update-alternatives` is not available, the CLI will fail when attempting to register or manage Java versions.
+
+### Must run from tar directory
+
+<Warning>
+The CLI must be executed from the same directory as your `.tar.gz` file when installing a new Java version.
+</Warning>
+
+**Why**: The extraction and installation process:
+
+1. Extracts the tar.gz file in the current working directory
+2. Uses `filepath.Glob("jdk-*")` to find the extracted folder
+3. Moves the folder to `/opt/java`
+
+**Code reference** (`internal/helps/helps.go:79-90`):
+
+```go
+func ExtractNameDir() []string {
+    matches, err := filepath.Glob("jdk-*")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    if len(matches) == 0 {
+        log.Fatal("not found")
+    }
+
+    return matches
+}
+```
+
+**Workaround**: While the binary can be placed in your PATH for easy access, you still need to navigate to the directory containing your tar.gz files before running the installation command.
+
+```bash
+# Even with JavaOptionsCli in PATH:
+cd ~/downloads
+JavaOptionsCli  # Now install from here
+```
+
+### Fixed installation path
+
+All Java versions are installed to `/opt/java` with no option to customize the location.
+
+**Hardcoded path** (`internal/commands/newjava.go:24-29`):
+
+```go
+info, err := os.Stat("/opt/java")
+helps.ExistDir(info, err)
+
+helps.ExtracFile(tar)
+maches := helps.ExtractNameDir()
+pathF := "/opt/java/" + maches[0]
+```
+
+### No automatic downloading
+
+Users must manually download Java tar.gz files from Oracle, Adoptium, or other sources before using the CLI.
+
+**Current workflow**:
+1. Download `.tar.gz` from external source
+2. Place in a directory
+3. Run CLI from that directory
+4. Enter filename when prompted
+
+### Limited version detection
+
+The tool relies on user input for:
+- The folder name within `/opt/java`
+- The priority number for update-alternatives
+
+There's no automatic parsing of the Java version from the archive or `java -version` output.
+
+### Single binary registration
+
+Only three binaries are registered with update-alternatives:
+- `java`
+- `javac`
+- `jar`
+
+Other Java tools in the `bin` directory (like `jshell`, `keytool`, `jdeps`) are not automatically registered.
+
+## Future improvements
+
+The following enhancements are planned for future releases:
+
+### Support for other Linux distributions
+
+Expand compatibility beyond Debian-based systems by:
+- Detecting the distribution type
+- Implementing alternative version management for RPM-based systems
+- Supporting generic installation methods
+
+### Automatic download of Java releases
+
+Integrate direct downloading capabilities:
+- Fetch Java releases from Adoptium, Oracle, or other sources
+- Verify checksums for security
+- Eliminate the need for manual downloads
+
+**Potential workflow**:
+```bash
+JavaOptionsCli
+> Install new Java version
+> Select: Java 21 (Temurin)
+> Downloading...
+> Installing...
+```
+
+### Better version detection
+
+Automatic detection of:
+- Java version from archive contents
+- Vendor information (Oracle, Adoptium, etc.)
+- Appropriate priority values
+- All available binaries in the distribution
+
+### Configurable install path
+
+Allow users to specify custom installation directories:
+
+```bash
+# Potential configuration
+~/.javaoptionscli/config.yaml
+install_path: /opt/java
+# or
+install_path: /home/user/.local/java
+```
+
+### Extract from any directory
+
+Remove the requirement to run from the tar.gz directory:
+- Accept full paths to tar.gz files
+- Extract to temporary location
+- Move to final destination
+
+**Potential usage**:
+```bash
+JavaOptionsCli install /path/to/jdk-21_linux-x64_bin.tar.gz
+```

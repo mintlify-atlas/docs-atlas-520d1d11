@@ -1,0 +1,137 @@
+---
+title: Configuration
+description: Learn about JavaOptionsCli's configuration, including installation paths, update-alternatives priority system, and binary structure
+---
+
+## Installation path
+
+All Java versions managed by JavaOptionsCli are installed in a centralized location:
+
+```bash
+/opt/java
+```
+
+This directory is created automatically during the first installation if it doesn't exist. The CLI checks for this directory and creates it with `0777` permissions when needed.
+
+## Binary paths structure
+
+Each Java version is stored in its own subdirectory within `/opt/java`, with binaries located in the `bin` folder:
+
+```bash
+/opt/java/jdk-21/bin/java
+/opt/java/jdk-21/bin/javac
+/opt/java/jdk-21/bin/jar
+```
+
+The typical structure looks like:
+
+```bash
+/opt/java/
+├── jdk-17/
+│   └── bin/
+│       ├── java
+│       ├── javac
+│       └── jar
+└── jdk-21/
+    └── bin/
+        ├── java
+        ├── javac
+        └── jar
+```
+
+## Update-alternatives priority system
+
+JavaOptionsCli uses Debian's `update-alternatives` system to manage multiple Java installations. When you install a new Java version, you need to provide a priority number.
+
+### Priority format
+
+The priority is a numeric value that determines which version gets selected automatically. Higher numbers have higher priority.
+
+**Recommended format**: Use the Java version number followed by two zeros.
+
+```bash
+Java 21 → 2100
+Java 17 → 1700
+Java 11 → 1100
+```
+
+### How it works
+
+The CLI registers three binaries for each Java installation:
+
+```bash
+sudo update-alternatives --install /usr/bin/java java /opt/java/jdk-21/bin/java 2100
+sudo update-alternatives --install /usr/bin/javac javac /opt/java/jdk-21/bin/javac 2100
+sudo update-alternatives --install /usr/bin/jar jar /opt/java/jdk-21/bin/jar 2100
+```
+
+Each command registers:
+- The system-wide binary path (`/usr/bin/java`)
+- The alternative name (`java`)
+- The actual binary location (`/opt/java/jdk-21/bin/java`)
+- The priority value (`2100`)
+
+### Managing alternatives
+
+You can interact with the alternatives system through the CLI:
+
+- **Change version**: Uses `update-alternatives --config` to let you manually select which version to use
+- **Auto mode**: Uses `update-alternatives --auto` to automatically select the highest priority version
+- **List versions**: Uses `update-alternatives --list` to display all registered versions
+
+## Running from tar.gz directory
+
+<Warning>
+The CLI must be executed from the same directory where your `.tar.gz` file is located.
+</Warning>
+
+This is a current requirement because:
+
+1. The CLI extracts the tar.gz file in the current working directory
+2. It looks for extracted `jdk-*` directories using `filepath.Glob("jdk-*")`
+3. It then moves the extracted directory to `/opt/java`
+
+### Workflow example
+
+```bash
+# Place your tar.gz file in a directory
+cd ~/downloads
+ls
+# jdk-21_linux-x64_bin.tar.gz
+
+# Run JavaOptionsCli from this directory
+JavaOptionsCli
+
+# When prompted, enter the tar.gz filename
+Enter the name of the tar file
+jdk-21_linux-x64_bin.tar.gz
+```
+
+The extraction process:
+
+1. Extracts the tar.gz in the current directory
+2. Identifies the extracted folder (e.g., `jdk-21.0.1`)
+3. Moves it to `/opt/java/jdk-21.0.1`
+4. Registers the binaries with update-alternatives
+
+### Making the CLI globally available
+
+While the CLI must run from the tar.gz directory during installation, you can make the binary itself globally accessible:
+
+**Option 1: Move to PATH**
+
+```bash
+sudo mv JavaOptionsCli /usr/bin/JavaOptionsCli
+```
+
+**Option 2: Create an alias**
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias javaoptionscli="/path/to/JavaOptionsCli"
+
+# Reload shell
+source ~/.bashrc
+```
+
+This allows you to run `JavaOptionsCli` from any directory, but you still need to navigate to the directory containing your tar.gz files before installing a new version.

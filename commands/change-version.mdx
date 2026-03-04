@@ -1,0 +1,241 @@
+---
+title: Change version
+description: Switch between installed Java versions interactively
+---
+
+The **Change Version** command allows you to switch your active Java version by selecting from all registered alternatives in your system.
+
+## When to use this command
+
+Use this command when you:
+- Need to switch to a different Java version for a specific project
+- Want to test code against multiple Java versions
+- Need to match a project's required Java version
+- Are switching between development and production Java environments
+
+## How it works
+
+This command leverages the `update-alternatives --config` functionality to present an interactive selection menu for each Java binary (`java`, `javac`, and `jar`).
+
+## Step-by-step usage
+
+<Steps>
+  <Step title="Select the command">
+    From the main menu, choose **"Changes Version"**
+  </Step>
+
+  <Step title="Configure java runtime">
+    The system displays all available java alternatives:
+    
+    ```bash
+    Showing the options
+    
+    There are 3 choices for the alternative java (providing /usr/bin/java).
+    
+      Selection    Path                                Priority   Status
+    ------------------------------------------------------------
+    * 0            /opt/java/jdk-21/bin/java           2100      auto mode
+      1            /opt/java/jdk-11/bin/java           1100      manual mode
+      2            /opt/java/jdk-17/bin/java           1700      manual mode
+      3            /opt/java/jdk-21/bin/java           2100      manual mode
+    
+    Press <enter> to keep the current choice[*], or type selection number:
+    ```
+    
+    Enter the number corresponding to your desired Java version (e.g., `2` for Java 17).
+  </Step>
+
+  <Step title="Configure javac compiler">
+    After selecting the runtime, you'll see the javac alternatives:
+    
+    ```bash
+    There are 3 choices for the alternative javac (providing /usr/bin/javac).
+    
+      Selection    Path                                Priority   Status
+    ------------------------------------------------------------
+    * 0            /opt/java/jdk-21/bin/javac          2100      auto mode
+      1            /opt/java/jdk-11/bin/javac          1100      manual mode
+      2            /opt/java/jdk-17/bin/javac          1700      manual mode
+      3            /opt/java/jdk-21/bin/javac          2100      manual mode
+    
+    Press <enter> to keep the current choice[*], or type selection number:
+    ```
+    
+    Select the matching javac version.
+  </Step>
+
+  <Step title="Configure jar tool">
+    Finally, configure the jar binary:
+    
+    ```bash
+    There are 3 choices for the alternative jar (providing /usr/bin/jar).
+    
+      Selection    Path                                Priority   Status
+    ------------------------------------------------------------
+    * 0            /opt/java/jdk-21/bin/jar            2100      auto mode
+      1            /opt/java/jdk-11/bin/jar            1100      manual mode
+      2            /opt/java/jdk-17/bin/jar            1700      manual mode
+      3            /opt/java/jdk-21/bin/jar            2100      manual mode
+    
+    Press <enter> to keep the current choice[*], or type selection number:
+    ```
+    
+    Select the matching jar version.
+  </Step>
+
+  <Step title="Verification">
+    After all three selections, verify your Java version:
+    
+    ```bash
+    $ java -version
+    java version "17.0.9" 2023-10-17 LTS
+    Java(TM) SE Runtime Environment (build 17.0.9+11-LTS-201)
+    Java HotSpot(TM) 64-Bit Server VM (build 17.0.9+11-LTS-201, mixed mode, sharing)
+    ```
+  </Step>
+</Steps>
+
+## What happens behind the scenes
+
+The implementation in `internal/commands/changeversion.go:10-34` executes three sequential `update-alternatives --config` commands:
+
+```go
+err := u.RunCommandInteractive("sudo", "update-alternatives", "--config", "java")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--config", "javac")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--config", "jar")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+```
+
+Each command:
+1. Displays all registered alternatives for that binary
+2. Shows their priority and current status (auto/manual mode)
+3. Waits for your selection
+4. Updates the symbolic link in `/usr/bin/` to point to your chosen version
+
+## Understanding auto vs manual mode
+
+<Note>
+When you use this command, the system switches to **manual mode** for your selected alternatives. This means:
+- The system will NOT automatically switch versions even if a higher priority version is installed
+- Your selection persists across reboots
+- Use the [Update List](/commands/update-list) command to return to auto mode
+</Note>
+
+## Real terminal example
+
+```bash
+$ javaoptionscli
+# Select "Changes Version" from menu
+
+Showing the options
+
+There are 2 choices for the alternative java (providing /usr/bin/java).
+
+  Selection    Path                                Priority   Status
+------------------------------------------------------------
+* 0            /opt/java/jdk-21/bin/java           2100      auto mode
+  1            /opt/java/jdk-17/bin/java           1700      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 1
+
+There are 2 choices for the alternative javac (providing /usr/bin/javac).
+
+  Selection    Path                                Priority   Status
+------------------------------------------------------------
+* 0            /opt/java/jdk-21/bin/javac          2100      auto mode
+  1            /opt/java/jdk-17/bin/javac          1700      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 1
+
+There are 2 choices for the alternative jar (providing /usr/bin/jar).
+
+  Selection    Path                                Priority   Status
+------------------------------------------------------------
+* 0            /opt/java/jdk-21/bin/jar            2100      auto mode
+  1            /opt/java/jdk-17/bin/jar            1700      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 1
+
+# Returns to main menu
+```
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="Switching for a specific project">
+    When working on a project that requires Java 11, switch to that version before building:
+    ```bash
+    # Change to Java 11
+    $ javaoptionscli
+    # Select "Changes Version" and choose Java 11
+    
+    # Verify
+    $ java -version
+    
+    # Build your project
+    $ mvn clean install
+    ```
+  </Accordion>
+
+  <Accordion title="Testing across multiple Java versions">
+    Quickly test your application against different Java versions:
+    ```bash
+    # Test with Java 17
+    $ javaoptionscli  # Select Changes Version -> Java 17
+    $ ./run-tests.sh
+    
+    # Test with Java 21
+    $ javaoptionscli  # Select Changes Version -> Java 21
+    $ ./run-tests.sh
+    ```
+  </Accordion>
+
+  <Accordion title="Matching production environment">
+    Before deploying, ensure you're testing with the same Java version as production:
+    ```bash
+    # Production uses Java 17
+    $ javaoptionscli  # Select Changes Version -> Java 17
+    $ mvn clean package
+    $ java -jar target/myapp.jar
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Important notes
+
+<Warning>
+**Always select the same version for all three binaries** (java, javac, jar). Mixing versions can lead to unexpected behavior and compilation issues.
+</Warning>
+
+<Note>
+Changing Java version only affects the **system-wide** default. Applications using `JAVA_HOME` environment variable may still use a different version. Update `JAVA_HOME` if needed:
+
+```bash
+export JAVA_HOME=/opt/java/jdk-17
+export PATH=$JAVA_HOME/bin:$PATH
+```
+</Note>
+
+## Troubleshooting
+
+**No alternatives registered**
+- If you see "There are 0 choices", no Java versions are installed
+- Use the [New Version Java](/commands/new-version) command to add Java versions
+
+**Wrong version still active after switching**
+- Check if `JAVA_HOME` is set: `echo $JAVA_HOME`
+- Verify with: `which java` and `readlink -f $(which java)`
+- Open a new terminal session to refresh environment variables

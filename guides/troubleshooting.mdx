@@ -1,0 +1,391 @@
+---
+title: Troubleshooting
+description: Common issues and solutions when using JavaOptionsCli
+---
+
+## Installation issues
+
+### Error: Permission denied
+
+**Symptom:**
+```
+Error: mkdir /opt/java: permission denied
+```
+
+**Cause:** You don't have sudo privileges, or sudo isn't installed.
+
+**Solution:**
+
+```bash
+# Verify sudo access
+sudo -v
+
+# If sudo isn't installed
+su -
+apt install sudo
+usermod -aG sudo your-username
+```
+
+Log out and back in for group changes to take effect.
+
+<Warning>
+JavaOptionsCli requires sudo privileges to create `/opt/java` and register alternatives. Running without sudo will fail.
+</Warning>
+
+### Error: tar.gz file not found
+
+**Symptom:**
+```
+Error: open jdk-21_linux-x64_bin.tar.gz: no such file or directory
+```
+
+**Cause:** The tar.gz file isn't in your current directory, or you mistyped the filename.
+
+**Solution:**
+
+```bash
+# Verify the file exists in current directory
+ls -la *.tar.gz
+
+# Move to the correct directory
+cd /path/to/downloads
+
+# Run JavaOptionsCli from that directory
+JavaOptionsCli
+```
+
+<Tip>
+Always run JavaOptionsCli from the same directory where your `.tar.gz` files are located. This is a current design requirement.
+</Tip>
+
+### Error: Folder not found in /opt/java
+
+**Symptom:**
+```
+Error: stat /opt/java/jdk-21: no such file or directory
+```
+
+**Cause:** The folder name you entered doesn't match the extracted directory.
+
+**Solution:**
+
+List the actual folder names:
+
+```bash
+ls /opt/java/
+```
+
+Use the exact name shown. Common mistakes:
+- Typing `jdk-21` when the folder is `jdk-21.0.2`
+- Adding spaces or special characters
+- Case sensitivity issues
+
+## update-alternatives issues
+
+### Error: update-alternatives not found
+
+**Symptom:**
+```
+Command 'update-alternatives' not found
+```
+
+**Cause:** You're not on a Debian-based distribution.
+
+**Solution:**
+
+JavaOptionsCli only works on Debian-based systems (Ubuntu, Debian, Mint). For other distributions:
+
+- **Red Hat/Fedora/CentOS:** Use `alternatives` instead (manual configuration needed)
+- **Arch Linux:** Use `archlinux-java` (manual configuration needed)
+- **Manual approach:** Set `JAVA_HOME` and `PATH` environment variables
+
+### Error: Alternative link conflicts
+
+**Symptom:**
+```
+Error: alternative java can't be created because /usr/bin/java exists
+```
+
+**Cause:** A Java binary exists outside the alternatives system.
+
+**Solution:**
+
+```bash
+# Check what's at /usr/bin/java
+ls -l /usr/bin/java
+
+# If it's not a symlink, back it up and remove it
+sudo mv /usr/bin/java /usr/bin/java.backup
+
+# Then reinstall with JavaOptionsCli
+```
+
+### Error: update-alternatives shows no alternatives
+
+**Symptom:**
+```
+update-alternatives: error: no alternatives for java
+```
+
+**Cause:** No Java versions are registered with the alternatives system.
+
+**Solution:**
+
+Install at least one Java version using **New Version Java** from the menu.
+
+## Version switching issues
+
+### Java version doesn't change
+
+**Symptom:** After selecting a different version, `java -version` still shows the old version.
+
+**Cause:** The `java` binary is cached in your shell, or you have `JAVA_HOME` set in your environment.
+
+**Solution:**
+
+```bash
+# Clear the shell cache
+hash -r
+
+# Or start a new shell
+exec bash
+
+# Check for JAVA_HOME override
+echo $JAVA_HOME
+
+# If set, consider removing it from ~/.bashrc or ~/.profile
+unset JAVA_HOME
+```
+
+<Note>
+The `update-alternatives` system manages symlinks in `/usr/bin/`. If `JAVA_HOME` is set, it may override this behavior in some applications.
+</Note>
+
+### Mismatched java and javac versions
+
+**Symptom:**
+```
+java -version   # Shows Java 21
+javac -version  # Shows Java 17
+```
+
+**Cause:** You selected different versions for `java` and `javac` when switching.
+
+**Solution:**
+
+Run **Changes Version** again and select the same version number for all three prompts (java, javac, jar).
+
+```bash
+JavaOptionsCli
+# Select: Changes Version
+# For java: Select version 2100
+# For javac: Select version 2100
+# For jar: Select version 2100
+```
+
+## lsd-related warnings
+
+### Error: lsd command not found
+
+**Symptom:**
+```
+Error: exec: "lsd": executable file not found in $PATH
+```
+
+**Cause:** The `lsd` utility isn't installed. JavaOptionsCli uses it to display directory listings.
+
+**Solution:**
+
+This is a non-critical error. You have two options:
+
+1. **Install lsd (recommended):**
+   ```bash
+   sudo apt install lsd
+   ```
+
+2. **Continue without lsd:**
+   The tool will still function, but directory listings will show errors. You can manually check `/opt/java`:
+   ```bash
+   ls /opt/java
+   ```
+
+<Tip>
+Installing `lsd` improves the user experience with colorized, icon-enhanced directory listings.
+</Tip>
+
+## Extraction issues
+
+### Error: Invalid or corrupt tar.gz
+
+**Symptom:**
+```
+Error: gzip: invalid header
+```
+
+**Cause:** The downloaded file is corrupted or incomplete.
+
+**Solution:**
+
+```bash
+# Verify the file integrity
+file jdk-21_linux-x64_bin.tar.gz
+# Should output: gzip compressed data
+
+# Check file size (shouldn't be 0 or unexpectedly small)
+ls -lh jdk-21_linux-x64_bin.tar.gz
+
+# Re-download the file if corrupted
+rm jdk-21_linux-x64_bin.tar.gz
+# Download again from official source
+```
+
+### Error: No space left on device
+
+**Symptom:**
+```
+Error: write /opt/java/jdk-21/...: no space left on device
+```
+
+**Cause:** The `/opt` partition or root filesystem is full.
+
+**Solution:**
+
+```bash
+# Check disk space
+df -h /opt
+
+# Free up space by removing old Java versions
+JavaOptionsCli → Delete Version
+
+# Or manually clean up
+sudo rm -rf /opt/java/old-jdk-version
+```
+
+<Warning>
+JDK archives can be 150-300 MB compressed and 500 MB-1 GB extracted. Ensure you have sufficient space before installation.
+</Warning>
+
+## Path and directory issues
+
+### Error: Wrong binary path
+
+**Symptom:**
+```
+update-alternatives: error: alternative path /opt/java/jdk-21/java doesn't exist
+```
+
+**Cause:** You provided an incorrect folder name, or the JDK structure is non-standard.
+
+**Solution:**
+
+Verify the correct path structure:
+
+```bash
+# List the extracted contents
+ls -la /opt/java/jdk-21/
+
+# Verify bin directory exists
+ls /opt/java/jdk-21/bin/
+
+# Check for java binary
+ls /opt/java/jdk-21/bin/java
+```
+
+The tool expects this structure:
+```
+/opt/java/
+└── jdk-XX/
+    └── bin/
+        ├── java
+        ├── javac
+        └── jar
+```
+
+### Error: jdk-* pattern not found
+
+**Symptom:**
+```
+log.Fatal: not found
+```
+
+**Cause:** The extracted directory doesn't match the `jdk-*` pattern.
+
+**Solution:**
+
+The tool uses pattern matching to find extracted directories starting with `jdk-`. If your archive extracts to a different name:
+
+```bash
+# Check what was extracted
+ls -d */
+
+# If it's named differently (e.g., OpenJDK17U-jdk_x64_linux_hotspot_17.0.1_12)
+# Manually rename it
+mv OpenJDK17U-jdk_x64_linux_hotspot_17.0.1_12 jdk-17.0.1
+
+# Then run JavaOptionsCli
+```
+
+<Note>
+This is a known limitation. The tool currently expects directory names starting with `jdk-`. Future versions may support custom patterns.
+</Note>
+
+## Recovery procedures
+
+### Reset alternatives system
+
+If the alternatives system is completely broken:
+
+```bash
+# Remove all Java alternatives
+sudo update-alternatives --remove-all java
+sudo update-alternatives --remove-all javac
+sudo update-alternatives --remove-all jar
+
+# Reinstall all versions through JavaOptionsCli
+JavaOptionsCli → New Version Java
+```
+
+### Clean installation
+
+For a fresh start:
+
+```bash
+# Remove all alternatives
+sudo update-alternatives --remove-all java
+sudo update-alternatives --remove-all javac
+sudo update-alternatives --remove-all jar
+
+# Remove all Java installations
+sudo rm -rf /opt/java/*
+
+# Reinstall desired versions
+JavaOptionsCli → New Version Java
+```
+
+### Manual alternatives registration
+
+If JavaOptionsCli fails, you can manually register a version:
+
+```bash
+sudo update-alternatives --install /usr/bin/java java /opt/java/jdk-21/bin/java 2100
+sudo update-alternatives --install /usr/bin/javac javac /opt/java/jdk-21/bin/javac 2100
+sudo update-alternatives --install /usr/bin/jar jar /opt/java/jdk-21/bin/jar 2100
+
+# Set as active
+sudo update-alternatives --config java
+sudo update-alternatives --config javac
+sudo update-alternatives --config jar
+```
+
+## Getting help
+
+If you encounter issues not covered here:
+
+1. Check the [GitHub repository](https://github.com/Vincixd09/JavaOptionsCli) for known issues
+2. Verify you meet all [system requirements](/guides/requirements)
+3. Review the [complete workflow](/guides/workflow) to ensure proper usage
+4. Open an issue with:
+   - Your Linux distribution and version
+   - Complete error message
+   - Steps to reproduce the problem
+   - Output of `update-alternatives --display java`

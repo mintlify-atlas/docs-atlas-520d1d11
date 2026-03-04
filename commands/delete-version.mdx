@@ -1,0 +1,336 @@
+---
+title: Delete version
+description: Remove a Java version from system alternatives and optionally delete its files
+---
+
+The **Delete Version** command removes a Java version from the system's alternatives database and optionally deletes the installation files from `/opt/java/`.
+
+## When to use this command
+
+Use this command when you:
+- No longer need a specific Java version
+- Want to free up disk space by removing old JDK installations
+- Need to clean up a corrupted or incomplete Java installation
+- Are replacing an old version with a newer release
+- Want to unregister a version from alternatives without deleting files
+
+## Two-stage deletion process
+
+This command performs deletion in two stages:
+
+1. **Unregister from alternatives** - Removes the version from system alternatives (required)
+2. **Delete files** - Removes the actual files from `/opt/java/` (optional)
+
+<Note>
+You can unregister a version from alternatives while keeping the files on disk. This is useful if you want to temporarily remove a version but may need to reinstall it later.
+</Note>
+
+## Step-by-step usage
+
+<Steps>
+  <Step title="Select the command">
+    From the main menu, choose **"Delete Version"**
+  </Step>
+
+  <Step title="View available versions">
+    The tool displays all Java directories in `/opt/java/`:
+    
+    ```bash
+    Delete Java version
+    drwxr-xr-x  - root 12 Jan 10:30 jdk-11
+    drwxr-xr-x  - root 12 Jan 10:31 jdk-17
+    drwxr-xr-x  - root 12 Jan 10:32 jdk-21
+    ```
+  </Step>
+
+  <Step title="Enter folder name">
+    Specify the Java version folder to delete:
+    
+    ```bash
+    Ej. jdk-21
+    jdk-17
+    ```
+    
+    This identifies which version to unregister from alternatives.
+  </Step>
+
+  <Step title="Unregister from alternatives">
+    The tool removes the version from alternatives for all three binaries:
+    
+    ```bash
+    # Unregistering java, javac, and jar
+    # This happens automatically with sudo privileges
+    ```
+    
+    The version is no longer available via `update-alternatives`.
+  </Step>
+
+  <Step title="Choose file deletion">
+    Decide whether to delete the installation files:
+    
+    ```bash
+    Do you want to delete the Java files? in /opt/java
+    yes or not
+    yes
+    ```
+    
+    - Enter `yes` to delete the files
+    - Enter `not` (or anything else) to keep the files
+  </Step>
+
+  <Step title="Confirm file deletion (if yes)">
+    If you chose to delete files, confirm the folder name again:
+    
+    ```bash
+    Enter the Java version you want to delete
+    Ej. jdk-21
+    jdk-17
+    
+    Java System Deletion
+    ```
+    
+    The files are permanently removed from `/opt/java/`.
+  </Step>
+
+  <Step title="Completion message">
+    ```bash
+    Java is no longer in the system alternatives, but it's still in the folder /opt/java/
+    ```
+    
+    This message appears if you chose not to delete files. Otherwise, it confirms complete removal.
+  </Step>
+</Steps>
+
+## What happens behind the scenes
+
+The implementation in `internal/commands/deletejava.go:11-71` performs the following operations:
+
+### 1. Display available versions
+
+```go
+err := u.RunCommandWithOutput("lsd", "/opt/java")
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+```
+
+### 2. Construct binary paths
+
+```go
+color.Info.Tips("Ej. jdk-21")
+fmt.Scanln(&path)
+pathR := "/opt/java/" + path + "/bin"
+
+java := pathR + "/java"
+javac := pathR + "/javac"
+jar := pathR + "/jar"
+```
+
+### 3. Remove from alternatives
+
+```go
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--remove", "java", java)
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--remove", "javac", javac)
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--remove", "jar", jar)
+if err != nil {
+    color.Error.Println("Error: ", err)
+    return
+}
+```
+
+These commands remove the alternatives entries, making the version unavailable via `update-alternatives --config`.
+
+### 4. Optional file deletion
+
+```go
+if op == "yes" {
+    color.Info.Prompt("Enter the Java version you want to delete")
+    color.Info.Tips("Ej. jdk-21")
+    fmt.Scanln(&path)
+    pathR = "/opt/java/" + path
+    err = u.RunCommandInteractive("sudo", "rm", "-rf", pathR)
+    if err != nil {
+        color.Error.Println("Error: ", err)
+        return
+    }
+    color.Info.Prompt("Java System Deletion")
+}
+```
+
+If you chose `yes`, this recursively deletes the entire Java directory.
+
+## Real terminal example
+
+### Complete deletion (unregister + delete files)
+
+```bash
+$ javaoptionscli
+# Select "Delete Version" from menu
+
+Delete Java version
+drwxr-xr-x  - root 12 Jan 10:30 jdk-11
+drwxr-xr-x  - root 12 Jan 10:31 jdk-17
+drwxr-xr-x  - root 12 Jan 10:32 jdk-21
+
+Ej. jdk-21
+jdk-11
+
+# Unregistering from alternatives...
+
+Do you want to delete the Java files? in /opt/java
+yes or not
+yes
+
+Enter the Java version you want to delete
+Ej. jdk-21
+jdk-11
+
+Java System Deletion
+
+# Returns to main menu after 4 seconds
+```
+
+### Unregister only (keep files)
+
+```bash
+$ javaoptionscli
+# Select "Delete Version" from menu
+
+Delete Java version
+drwxr-xr-x  - root 12 Jan 10:30 jdk-11
+drwxr-xr-x  - root 12 Jan 10:31 jdk-17
+
+Ej. jdk-21
+jdk-11
+
+# Unregistering from alternatives...
+
+Do you want to delete the Java files? in /opt/java
+yes or not
+no
+
+Java is no longer in the system alternatives, but it's still in the folder /opt/java/
+
+# Returns to main menu after 4 seconds
+```
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="Freeing disk space">
+    Remove old Java versions you no longer use:
+    ```bash
+    # Check disk usage first
+    $ du -sh /opt/java/*
+    450M    /opt/java/jdk-11
+    480M    /opt/java/jdk-17
+    520M    /opt/java/jdk-21
+    
+    # Delete old version
+    $ javaoptionscli  # Delete Version -> jdk-11 -> yes
+    ```
+  </Accordion>
+
+  <Accordion title="Cleaning up failed installation">
+    If a Java installation failed or is corrupted, remove it completely:
+    ```bash
+    $ javaoptionscli
+    # Delete Version -> corrupted-jdk -> yes
+    # Then reinstall using New Version Java
+    ```
+  </Accordion>
+
+  <Accordion title="Temporarily removing from alternatives">
+    Keep files but remove from alternatives (useful for testing):
+    ```bash
+    $ javaoptionscli
+    # Delete Version -> jdk-17 -> not
+    # Version is unregistered but files remain in /opt/java/jdk-17
+    # Can be re-registered later if needed
+    ```
+  </Accordion>
+
+  <Accordion title="Upgrading minor versions">
+    Replace Java 17.0.8 with 17.0.9:
+    ```bash
+    # Delete old version
+    $ javaoptionscli  # Delete Version -> jdk-17.0.8 -> yes
+    
+    # Install new version
+    $ javaoptionscli  # New Version Java -> jdk-17.0.9.tar.gz
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Important warnings
+
+<Warning>
+**Data cannot be recovered after deletion**
+
+If you choose to delete files, they are permanently removed with `rm -rf`. There is no recycle bin or undo option. Make sure you've selected the correct version before confirming.
+</Warning>
+
+<Warning>
+**Don't delete the currently active version**
+
+Before deleting, verify you're not removing the currently active Java version:
+
+```bash
+$ java -version
+$ which java
+$ readlink -f $(which java)
+```
+
+If you delete the active version, you may break applications. Switch to a different version first using [Change Version](/commands/change-version).
+</Warning>
+
+<Note>
+After deleting a version, if you have other Java versions installed, the system will automatically switch to the highest priority version in auto mode. Use [List Versions](/commands/list-versions) to see remaining versions.
+</Note>
+
+## Manual file deletion later
+
+If you chose not to delete files during unregistration, you can manually delete them later:
+
+```bash
+# List remaining Java directories
+$ ls -la /opt/java/
+
+# Delete specific version
+$ sudo rm -rf /opt/java/jdk-11
+
+# Verify deletion
+$ ls -la /opt/java/
+```
+
+## Troubleshooting
+
+**Error: No such file or directory**
+- The folder name doesn't exist in `/opt/java/`
+- Check available folders: `ls /opt/java/`
+- Ensure you typed the exact folder name
+
+**Error: Permission denied**
+- You need sudo privileges to remove alternatives and delete files
+- The command will prompt for your password
+
+**Version still appears in alternatives after deletion**
+- The removal may have failed
+- Manually check: `update-alternatives --list java`
+- Manually remove if needed: `sudo update-alternatives --remove java /opt/java/jdk-XX/bin/java`
+
+**Can't delete files even with sudo**
+- Files may be in use by a running Java process
+- Check for Java processes: `ps aux | grep java`
+- Stop processes and try again

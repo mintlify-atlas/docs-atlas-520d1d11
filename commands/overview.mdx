@@ -1,0 +1,63 @@
+---
+title: Command overview
+description: Overview of all available commands in the JavaOptionsCli interactive menu
+---
+
+JavaOptionsCli provides an interactive menu system for managing multiple Java versions on Linux systems. The tool uses `update-alternatives` under the hood to seamlessly switch between different Java installations.
+
+## Available commands
+
+When you launch JavaOptionsCli, you'll see an interactive menu with the following options:
+
+<CardGroup cols={2}>
+  <Card title="New version Java" icon="plus" href="/commands/new-version">
+    Install and register a new Java version from a tar file
+  </Card>
+  <Card title="Change version" icon="arrow-right-arrow-left" href="/commands/change-version">
+    Switch between installed Java versions
+  </Card>
+  <Card title="View list versions" icon="list" href="/commands/list-versions">
+    Display all registered Java versions in the system
+  </Card>
+  <Card title="Delete version" icon="trash" href="/commands/delete-version">
+    Remove a Java version from system alternatives
+  </Card>
+  <Card title="Update list" icon="rotate" href="/commands/update-list">
+    Automatically select the highest priority Java version
+  </Card>
+</CardGroup>
+
+## How the menu works
+
+The interactive menu is implemented in `internal/menu.go:11-41` and uses the [pterm](https://github.com/pterm/pterm) library for rendering:
+
+```go
+options := []string{
+    "New Version Java",
+    "Changes Version",
+    "View List Versions",
+    "Delete Version",
+    "Update List",
+    "Exit",
+}
+
+selected, _ := pterm.DefaultInteractiveSelect.WithOptions(options).WithMaxHeight(10).Show()
+```
+
+After each command completes, the menu automatically reappears, allowing you to perform multiple operations in a single session.
+
+## Navigation
+
+Use arrow keys to navigate through the menu options and press Enter to select a command. Choose "Exit" to close the application.
+
+## Behind the scenes
+
+All commands interact with Linux's `update-alternatives` system, which manages symbolic links for commands that can have multiple versions installed. JavaOptionsCli manages three key Java binaries:
+
+- `java` - The Java runtime
+- `javac` - The Java compiler
+- `jar` - The Java archive tool
+
+<Note>
+All Java installations are stored in `/opt/java/` by default. Make sure this directory exists before installing new versions.
+</Note>

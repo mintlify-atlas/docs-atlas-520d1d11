@@ -1,0 +1,167 @@
+---
+title: Welcome to JavaOptionsCli
+description: Manage multiple Java versions on Debian-based systems with an interactive terminal interface
+mode: custom
+---
+
+<div className="relative overflow-hidden dark:bg-[#0f1117] bg-white">
+  <div className="py-20 px-6">
+    <div className="max-w-5xl mx-auto">
+      <div className="text-center">
+        <h1 className="text-5xl md:text-6xl font-bold dark:text-white text-gray-900 mb-6">
+          JavaOptionsCli
+        </h1>
+        <p className="text-xl dark:text-gray-300 text-gray-600 max-w-2xl mx-auto mb-8">
+          A simple, interactive CLI tool written in Go to install and manage Java versions on Debian-based systems
+        </p>
+        <div className="flex flex-wrap gap-4 justify-center">
+          <a
+            href="/quickstart"
+            className="inline-flex items-center px-6 py-3 rounded-lg bg-[#7C3AED] text-white font-semibold hover:bg-[#5B21B6] transition-colors"
+          >
+            Get Started
+          </a>
+          <a
+            href="/commands/overview"
+            className="inline-flex items-center px-6 py-3 rounded-lg border dark:border-white/30 border-gray-300 dark:bg-white/10 bg-gray-50 dark:text-white text-gray-900 font-semibold dark:hover:bg-white/20 hover:bg-gray-100 transition-colors"
+          >
+            View Commands
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-semibold dark:text-white text-gray-900 mb-4">
+    Key features
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Everything you need to manage Java versions efficiently
+  </p>
+
+  <CardGroup cols={2}>
+    <Card title="Install Java versions" icon="download" href="/commands/new-version">
+      Extract and install Java from tar.gz archives directly to `/opt/java`
+    </Card>
+    <Card title="Switch versions instantly" icon="arrows-rotate" href="/commands/change-version">
+      Change active Java version using update-alternatives with an interactive menu
+    </Card>
+    <Card title="List installed versions" icon="list" href="/commands/list-versions">
+      View all Java versions registered in update-alternatives
+    </Card>
+    <Card title="Clean uninstallation" icon="trash" href="/commands/delete-version">
+      Remove Java versions from system alternatives and optionally delete files
+    </Card>
+  </CardGroup>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-semibold dark:text-white text-gray-900 mb-4">
+    Quick start
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    Get JavaOptionsCli running in minutes
+  </p>
+
+  <Steps>
+    <Step title="Install JavaOptionsCli">
+      Download or build the binary, then make it globally available:
+      
+      ```bash
+      sudo mv JavaOptionsCli /usr/bin/JavaOptionsCli
+      ```
+      
+      Now you can run it from anywhere.
+    </Step>
+    
+    <Step title="Prepare your Java archive">
+      Download a Java JDK tar.gz file and place it in a directory:
+      
+      ```bash
+      # Example: jdk-21_linux-x64_bin.tar.gz
+      cd ~/downloads
+      ```
+    </Step>
+    
+    <Step title="Launch the CLI">
+      Run JavaOptionsCli from the same directory as your tar.gz file:
+      
+      ```bash
+      JavaOptionsCli
+      ```
+      
+      An interactive menu will appear with options to install, switch, list, or delete Java versions.
+    </Step>
+    
+    <Step title="Install your first Java version">
+      Select **New Version Java** from the menu, then enter the tar.gz filename when prompted:
+      
+      ```bash
+      Enter the name of the tar file
+      jdk-21_linux-x64_bin.tar.gz
+      ```
+      
+      The CLI will extract the archive, move it to `/opt/java`, and configure update-alternatives.
+    </Step>
+  </Steps>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <h2 className="text-3xl font-semibold dark:text-white text-gray-900 mb-4">
+    How it works
+  </h2>
+  <p className="text-base dark:text-gray-400 text-gray-600 mb-8">
+    JavaOptionsCli integrates with Debian's update-alternatives system
+  </p>
+
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="dark:bg-[#1a1d27] bg-gray-50 dark:border-[#27272a] border-gray-200 border rounded-lg p-6">
+      <div className="text-[#7C3AED] text-2xl mb-3">📦</div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">
+        Install
+      </h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        Extracts tar.gz archives and installs Java to `/opt/java`, then registers binaries with update-alternatives
+      </p>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 dark:border-[#27272a] border-gray-200 border rounded-lg p-6">
+      <div className="text-[#7C3AED] text-2xl mb-3">⚡</div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">
+        Switch
+      </h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        Changes system-wide Java version by updating alternatives for java, javac, and jar binaries
+      </p>
+    </div>
+    
+    <div className="dark:bg-[#1a1d27] bg-gray-50 dark:border-[#27272a] border-gray-200 border rounded-lg p-6">
+      <div className="text-[#7C3AED] text-2xl mb-3">🗑️</div>
+      <h3 className="text-lg font-semibold dark:text-white text-gray-900 mb-2">
+        Manage
+      </h3>
+      <p className="text-sm dark:text-gray-400 text-gray-600">
+        Lists all registered versions and provides options to remove them from alternatives or delete completely
+      </p>
+    </div>
+  </div>
+</div>
+
+<div className="mt-16 mb-16 max-w-5xl mx-auto px-6">
+  <div className="dark:bg-[#1a1d27] bg-gray-50 dark:border-[#27272a] border-gray-200 border rounded-xl p-8 text-center">
+    <h2 className="text-2xl font-semibold dark:text-white text-gray-900 mb-3">
+      Ready to get started?
+    </h2>
+    <p className="text-base dark:text-gray-400 text-gray-600 mb-6 max-w-xl mx-auto">
+      Follow our quickstart guide to install JavaOptionsCli and manage your first Java version
+    </p>
+    <a
+      href="/quickstart"
+      className="inline-flex items-center px-6 py-3 rounded-lg bg-[#7C3AED] text-white font-semibold hover:bg-[#5B21B6] transition-colors"
+    >
+      View Quickstart
+    </a>
+  </div>
+</div>

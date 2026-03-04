@@ -1,0 +1,186 @@
+---
+title: New version Java
+description: Install and register a new Java version from a tar archive
+---
+
+The **New Version Java** command extracts a Java tar archive and registers it with the system's alternatives system, making it available for use alongside other Java versions.
+
+## When to use this command
+
+Use this command when you:
+- Have downloaded a new Java JDK tar file (e.g., `jdk-21.tar.gz`)
+- Want to add another Java version to your system
+- Need to install a specific Java version for project requirements
+
+## Prerequisites
+
+<Note>
+Before running this command, ensure:
+- You have a Java tar file downloaded
+- The `/opt/java` directory exists on your system
+- You have sudo privileges
+</Note>
+
+## Step-by-step usage
+
+<Steps>
+  <Step title="Select the command">
+    From the interactive menu, choose **"New Version Java"**
+  </Step>
+
+  <Step title="Enter tar file name">
+    When prompted, enter the name of your Java tar file:
+    
+    ```bash
+    Enter the name of the tar file
+    jdk-21.tar.gz
+    ```
+
+    The tar file should be in your current directory.
+  </Step>
+
+  <Step title="Tar extraction">
+    The tool automatically extracts the tar file and moves it to `/opt/java/`:
+    
+    ```bash
+    Tar decompress correctly
+    ```
+
+    You'll then see a list of all Java folders in `/opt/java`.
+  </Step>
+
+  <Step title="Specify folder name">
+    Enter the folder name for your new Java version:
+    
+    ```bash
+    Ej. jdk-21
+    Enter the folder for the new Java version
+    jdk-21
+    ```
+
+    This is the directory name inside `/opt/java/` where your Java installation resides.
+  </Step>
+
+  <Step title="Set version priority">
+    Assign a priority number to your Java version:
+    
+    ```bash
+    Ej. Java 21 === 2100
+    Enter the Java version
+    2100
+    ```
+
+    Higher numbers = higher priority. The system will use the highest priority version when set to auto mode.
+  </Step>
+
+  <Step title="Installation complete">
+    The tool registers all three Java binaries:
+    
+    ```bash
+    Java installed
+    ```
+
+    Your new Java version is now available in the system.
+  </Step>
+</Steps>
+
+## What happens behind the scenes
+
+The command performs several operations as shown in `internal/commands/newjava.go:13-78`:
+
+### 1. Directory verification
+
+```go
+info, err := os.Stat("/opt/java")
+helps.ExistDir(info, err)
+```
+
+Verifies that `/opt/java` exists, creating it if necessary.
+
+### 2. Tar extraction and move
+
+```go
+helps.ExtracFile(tar)
+maches := helps.ExtractNameDir()
+pathF := "/opt/java/" + maches[0]
+err = u.RunCommandInteractive("sudo", "mv", maches[0], pathF)
+```
+
+Extracts the tar file and moves it to the Java directory.
+
+### 3. Register with update-alternatives
+
+For each binary (`java`, `javac`, `jar`), the tool runs:
+
+```go
+java := pathR + "/java"
+javac := pathR + "/javac"
+jar := pathR + "/jar"
+
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--install", "/usr/bin/java", "java", java, version)
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--install", "/usr/bin/javac", "javac", javac, version)
+err = u.RunCommandInteractive("sudo", "update-alternatives", "--install", "/usr/bin/jar", "jar", jar, version)
+```
+
+These commands register the binaries with Linux's alternatives system.
+
+## Real terminal example
+
+```bash
+$ javaoptionscli
+# Select "New Version Java" from menu
+
+Enter the name of the tar file
+jdk-17.0.9.tar.gz
+Tar decompress correctly
+Here are your Java versions and their folders
+drwxr-xr-x  - root 12 Jan 10:30 jdk-11
+drwxr-xr-x  - root 12 Jan 10:31 jdk-17
+
+Ej. jdk-21
+Enter the folder for the new Java version
+jdk-17
+
+Ej. Java 21 === 2100
+Enter the Java version
+1700
+
+Java installed
+```
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="Installing multiple Java versions for different projects">
+    If you maintain projects requiring different Java versions, install each version with appropriate priority:
+    - Java 8: priority 800
+    - Java 11: priority 1100
+    - Java 17: priority 1700
+    - Java 21: priority 2100
+  </Accordion>
+
+  <Accordion title="Testing new Java releases">
+    When a new Java version is released, you can install it alongside existing versions without affecting your current setup. Give it a lower priority initially for testing.
+  </Accordion>
+
+  <Accordion title="Installing Oracle vs OpenJDK versions">
+    You can install both Oracle JDK and OpenJDK versions side by side, using different folder names like `jdk-17-oracle` and `jdk-17-openjdk`.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+The priority number is permanent for this installation. To change priority later, you'll need to delete and reinstall the version.
+</Warning>
+
+## Troubleshooting
+
+**Error: Directory /opt/java doesn't exist**
+- Create it with: `sudo mkdir -p /opt/java`
+
+**Error: Permission denied**
+- Ensure you have sudo privileges
+- The command will prompt for your password when needed
+
+**Tar extraction fails**
+- Verify the tar file is in your current directory
+- Check the tar file isn't corrupted: `tar -tzf your-file.tar.gz`

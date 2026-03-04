@@ -1,0 +1,138 @@
+---
+title: Installation
+description: Learn how to install JavaOptionsCli on your Debian-based system
+---
+
+## System requirements
+
+Before installing JavaOptionsCli, ensure your system meets the following requirements:
+
+- **Debian-based Linux distribution** (Ubuntu, Debian, Linux Mint, etc.)
+- **sudo privileges** for installing Java versions and managing update-alternatives
+- **Go 1.25.5 or later** (only if building from source)
+
+<Note>
+JavaOptionsCli uses the `update-alternatives` system to manage Java versions, which is standard on Debian-based distributions.
+</Note>
+
+## Installation methods
+
+<Steps>
+
+<Step title="Download or build the binary">
+
+### Option 1: Download pre-built binary
+
+Download the latest release from the [GitHub releases page](https://github.com/Vincixd09/JavaOptionsCli/releases).
+
+```bash
+wget https://github.com/Vincixd09/JavaOptionsCli/releases/latest/download/JavaOptionsCli
+```
+
+Make the binary executable:
+
+```bash
+chmod +x JavaOptionsCli
+```
+
+### Option 2: Build from source
+
+Clone the repository and build the binary:
+
+```bash
+git clone https://github.com/Vincixd09/JavaOptionsCli.git
+cd JavaOptionsCli
+go build -o JavaOptionsCli
+```
+
+This will create a `JavaOptionsCli` binary in the current directory.
+
+</Step>
+
+<Step title="Make it globally available">
+
+You have two options to make JavaOptionsCli accessible from anywhere on your system:
+
+### Option 1: Move to /usr/bin (recommended)
+
+Move the binary to a directory in your system PATH:
+
+```bash
+sudo mv JavaOptionsCli /usr/bin/JavaOptionsCli
+```
+
+After this, you can run the tool from any directory:
+
+```bash
+JavaOptionsCli
+```
+
+### Option 2: Create an alias
+
+Alternatively, create an alias in your shell configuration file:
+
+```bash ~/.bashrc
+alias javaoptionscli="/path/to/JavaOptionsCli"
+```
+
+Reload your shell configuration:
+
+```bash
+source ~/.bashrc
+```
+
+<Note>
+If you use zsh, add the alias to `~/.zshrc` instead of `~/.bashrc`.
+</Note>
+
+</Step>
+
+<Step title="Verify the installation">
+
+Run JavaOptionsCli to verify it's properly installed:
+
+```bash
+JavaOptionsCli
+```
+
+You should see the JavaOptionsCli interactive menu:
+
+```
+╔════════════════════════════════════╗
+║                                    ║
+║                                    ║
+║          JavaOptionsCli            ║
+║                                    ║
+║                                    ║
+╚════════════════════════════════════╝
+```
+
+</Step>
+
+</Steps>
+
+## Installation directory
+
+JavaOptionsCli installs all Java versions to a standardized location:
+
+```bash
+/opt/java
+```
+
+<Warning>
+The `/opt/java` directory will be created automatically on first use if it doesn't exist. Ensure you have sudo privileges to create this directory.
+</Warning>
+
+## Dependencies
+
+JavaOptionsCli uses the following Go libraries:
+
+- **pterm** - Interactive terminal UI components
+- **gookit/color** - Terminal color output
+- **go-utils** - Command execution utilities
+
+These dependencies are automatically included when building from source.
+
+## Next steps
+
+Now that you've installed JavaOptionsCli, you're ready to start managing Java versions on your system. Check out the [Quickstart guide](/quickstart) to learn how to install your first Java version.

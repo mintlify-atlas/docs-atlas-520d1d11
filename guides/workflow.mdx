@@ -1,0 +1,240 @@
+---
+title: Complete workflow
+description: Step-by-step guide for installing, managing, and switching between Java versions
+---
+
+## Overview
+
+JavaOptionsCli provides a streamlined workflow for managing multiple Java installations. This guide walks through the complete process from downloading Java to switching between versions.
+
+## Step 1: Download Java
+
+Download the Java version you want to install as a `.tar.gz` archive.
+
+### Recommended sources
+
+- [Oracle JDK](https://www.oracle.com/java/technologies/downloads/)
+- [OpenJDK](https://jdk.java.net/)
+- [Adoptium (Eclipse Temurin)](https://adoptium.net/)
+- [Amazon Corretto](https://aws.amazon.com/corretto/)
+
+<Tip>
+Choose the Linux x64 compressed archive (`.tar.gz`) format. Files are typically named like `jdk-21_linux-x64_bin.tar.gz` or `OpenJDK17U-jdk_x64_linux_hotspot_17.0.1_12.tar.gz`.
+</Tip>
+
+## Step 2: Prepare your workspace
+
+Place the downloaded `.tar.gz` file in a dedicated directory:
+
+```bash
+mkdir ~/java-downloads
+cd ~/java-downloads
+mv ~/Downloads/jdk-21_linux-x64_bin.tar.gz .
+```
+
+<Note>
+JavaOptionsCli must be executed from the same directory where the `.tar.gz` file is located. This is a current design requirement.
+</Note>
+
+## Step 3: Run JavaOptionsCli
+
+Launch the interactive CLI from the directory containing your tar.gz file:
+
+```bash
+JavaOptionsCli
+```
+
+<Tip>
+For easier access, consider moving the binary to `/usr/bin/` or creating an alias:
+
+```bash
+# Option 1: Make it globally available
+sudo mv JavaOptionsCli /usr/bin/JavaOptionsCli
+
+# Option 2: Create an alias
+echo 'alias javaoptionscli="/path/to/JavaOptionsCli"' >> ~/.bashrc
+source ~/.bashrc
+```
+</Tip>
+
+## Step 4: Install a new Java version
+
+### Select installation option
+
+From the main menu, choose **New Version Java**.
+
+### Provide the tar.gz filename
+
+When prompted, enter the exact name of your tar.gz file:
+
+```
+Enter the name of the tar file
+jdk-21_linux-x64_bin.tar.gz
+```
+
+### Specify the folder name
+
+The tool will extract the archive and show your `/opt/java` directory. Enter the extracted folder name:
+
+```
+Enter the folder for the new Java version
+jdk-21
+```
+
+<Warning>
+The folder name must exactly match the extracted directory name. Common examples: `jdk-21`, `jdk-17.0.1`, `jdk-11.0.18`.
+</Warning>
+
+### Set the priority version
+
+Provide a priority number for `update-alternatives`. Higher numbers = higher priority:
+
+```
+Enter the Java version
+2100
+```
+
+<Tip>
+**Best practice for version numbers:**
+- Java 21: `2100`
+- Java 17: `1700`
+- Java 11: `1100`
+- Java 8: `800`
+
+This ensures the newest version has the highest priority by default.
+</Tip>
+
+### What happens behind the scenes
+
+JavaOptionsCli performs these operations:
+
+1. Extracts the `.tar.gz` file to the current directory
+2. Moves the extracted folder to `/opt/java/`
+3. Registers three binaries with `update-alternatives`:
+   - `/opt/java/jdk-21/bin/java` → `/usr/bin/java`
+   - `/opt/java/jdk-21/bin/javac` → `/usr/bin/javac`
+   - `/opt/java/jdk-21/bin/jar` → `/usr/bin/jar`
+
+## Step 5: Switch between Java versions
+
+### Use the change version feature
+
+From the main menu, select **Changes Version**.
+
+You'll be prompted three times to configure:
+1. The active `java` binary
+2. The active `javac` compiler
+3. The active `jar` tool
+
+For each prompt, select the version number you want to activate.
+
+<Note>
+The tool runs `update-alternatives --config` for each binary. Choose the same version for all three to avoid mismatches between runtime and compiler.
+</Note>
+
+### Verify the active version
+
+After switching, verify your Java version:
+
+```bash
+java -version
+javac -version
+```
+
+## Step 6: View installed versions
+
+Select **View List Versions** from the menu to see all Java installations registered with `update-alternatives`.
+
+This displays:
+- All registered `java` binaries
+- All registered `javac` compilers
+- All registered `jar` tools
+
+## Step 7: Remove a Java version (optional)
+
+To uninstall a Java version:
+
+1. Select **Delete Version** from the menu
+2. Enter the folder name (e.g., `jdk-21`)
+3. Choose whether to delete the physical files from `/opt/java`
+
+The tool will:
+- Remove the version from `update-alternatives`
+- Optionally delete the installation directory
+
+<Warning>
+Deletion is permanent. Ensure you're removing the correct version before confirming.
+</Warning>
+
+## Best practices
+
+### Organize your downloads
+
+Keep all Java tar.gz files in a dedicated directory for easy access:
+
+```bash
+~/java-downloads/
+├── jdk-21_linux-x64_bin.tar.gz
+├── jdk-17_linux-x64_bin.tar.gz
+└── jdk-11_linux-x64_bin.tar.gz
+```
+
+### Use consistent naming
+
+When extracting, Java archives typically create folders like:
+- `jdk-21.0.2`
+- `jdk-17.0.1`
+- `jdk-11.0.18`
+
+Use these exact names when prompted by JavaOptionsCli.
+
+### Set appropriate priorities
+
+Use priority numbers that reflect the version hierarchy. This ensures `update-alternatives --auto` selects the most recent version by default.
+
+### Keep runtime and compiler in sync
+
+Always set the same Java version for `java`, `javac`, and `jar` to avoid compatibility issues.
+
+## Common workflows
+
+### Install multiple versions for testing
+
+```bash
+# Install Java 21 (priority 2100)
+# Install Java 17 (priority 1700)
+# Install Java 11 (priority 1100)
+
+# Default will be Java 21
+java -version  # 21.0.2
+
+# Switch to Java 17 for legacy project
+JavaOptionsCli → Changes Version → Select 1700
+java -version  # 17.0.1
+```
+
+### Update to a newer patch version
+
+```bash
+# Install new version with higher priority
+# Example: Upgrading from 21.0.1 to 21.0.2
+
+# Install 21.0.2 with priority 2101
+JavaOptionsCli → New Version Java
+
+# Remove old version
+JavaOptionsCli → Delete Version → jdk-21.0.1
+```
+
+### Verify installation integrity
+
+After installation, verify all components:
+
+```bash
+which java    # /usr/bin/java
+which javac   # /usr/bin/javac
+which jar     # /usr/bin/jar
+
+ls -l /usr/bin/java   # Should point to /etc/alternatives/java
+ls -l /etc/alternatives/java  # Should point to /opt/java/jdk-XX/bin/java
+```

@@ -1,0 +1,109 @@
+---
+title: System requirements
+description: Technical prerequisites for installing and running JavaOptionsCli
+---
+
+## Operating system
+
+JavaOptionsCli is designed specifically for Debian-based Linux distributions. This includes:
+
+- Ubuntu
+- Debian
+- Linux Mint
+- Pop!_OS
+- Elementary OS
+- Other Debian derivatives
+
+<Warning>
+The tool relies on `update-alternatives`, which is specific to Debian-based systems. It will not work on Red Hat-based (Fedora, CentOS) or Arch-based distributions without modifications.
+</Warning>
+
+## Essential dependencies
+
+### sudo privileges
+
+You must have sudo access to run JavaOptionsCli. The tool requires elevated privileges for:
+
+- Creating and managing the `/opt/java` directory
+- Registering Java versions with `update-alternatives`
+- Moving extracted Java installations to system directories
+
+### update-alternatives
+
+The `update-alternatives` command must be available on your system. This is typically pre-installed on all Debian-based distributions.
+
+To verify it's available:
+
+```bash
+which update-alternatives
+```
+
+Expected output: `/usr/bin/update-alternatives`
+
+<Note>
+JavaOptionsCli uses `update-alternatives` to manage `java`, `javac`, and `jar` binaries, allowing seamless switching between multiple Java versions.
+</Note>
+
+## Optional dependencies
+
+### lsd (LSDeluxe)
+
+The tool uses `lsd` for enhanced directory listings when displaying installed Java versions. While optional, it provides a better user experience.
+
+Install lsd:
+
+```bash
+sudo apt install lsd
+```
+
+Or download from the [official repository](https://github.com/lsd-rs/lsd).
+
+<Tip>
+If `lsd` is not installed, the tool will still function but you'll see error messages when listing Java versions. Consider installing it for the best experience.
+</Tip>
+
+## Directory structure
+
+### /opt/java
+
+All Java versions are installed to `/opt/java`. The tool will automatically create this directory if it doesn't exist.
+
+Example structure:
+
+```
+/opt/java/
+├── jdk-17.0.1/
+│   └── bin/
+│       ├── java
+│       ├── javac
+│       └── jar
+├── jdk-21.0.2/
+│   └── bin/
+│       ├── java
+│       ├── javac
+│       └── jar
+└── jdk-11.0.18/
+    └── bin/
+        ├── java
+        ├── javac
+        └── jar
+```
+
+### Working directory
+
+You must run JavaOptionsCli from the same directory where your Java `.tar.gz` files are located.
+
+<Warning>
+The tool expects to find the tar.gz file in the current working directory. If you run it from a different location, the installation will fail.
+</Warning>
+
+## Pre-installation checklist
+
+Before using JavaOptionsCli, ensure:
+
+- [ ] Running a Debian-based Linux distribution
+- [ ] Have sudo privileges
+- [ ] `update-alternatives` is available
+- [ ] (Optional) `lsd` is installed for better output
+- [ ] Downloaded Java `.tar.gz` files are in your current directory
+- [ ] Have write permissions in `/opt` (through sudo)
