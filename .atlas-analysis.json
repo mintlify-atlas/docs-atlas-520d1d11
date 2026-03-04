@@ -1,0 +1,62 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "JavaOptionsCli",
+  "projectDescription": "Interactive CLI tool for installing and managing Java versions on Debian-based systems",
+  "theme": "aspen",
+  "primaryColor": "#7C3AED",
+  "lightColor": "#A78BFA",
+  "darkColor": "#5B21B6",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Commands",
+        "pages": [
+          "commands/overview",
+          "commands/new-version",
+          "commands/change-version",
+          "commands/list-versions",
+          "commands/delete-version",
+          "commands/update-list"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "guides/requirements",
+          "guides/workflow",
+          "guides/troubleshooting"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/configuration",
+          "reference/limitations"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Install Java versions from tar.gz archives",
+    "Switch between installed Java versions",
+    "Manage update-alternatives configuration",
+    "Interactive terminal menu interface",
+    "List and delete installed Java versions"
+  ],
+  "publicApiSurface": [
+    "NewJava() - Install a new Java version",
+    "ChangeVersion() - Switch active Java version",
+    "ListVersion() - Display installed Java versions",
+    "DeleteVersion() - Remove a Java version",
+    "UpdateList() - Update system alternatives",
+    "Menu() - Display interactive menu"
+  ]
+}
